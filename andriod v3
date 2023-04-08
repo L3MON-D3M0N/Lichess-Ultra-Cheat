@@ -1,0 +1,88 @@
+// ==UserScript==
+// @name         Lichess Cheat - DUDE
+// @version      1
+// @description  Cheat on Lichess without getting caught - DUDE
+// @match        https://lichess.org/*
+// @grant        none
+// ==/UserScript==
+
+(function() {
+    'use strict';
+    let moveAccuracy = 0.8 + Math.random() * 0.05; // set move accuracy between 80-85%
+    setInterval(function(){
+        let board = document.querySelector(".cg-board-wrap");
+        if (board){
+            let isBlack = board.classList.contains("orientation-black");
+            let pieces = document.querySelectorAll(".cg-piece");
+            let legalMoves = [];
+            let bestMove = "";
+            let bestScore = isBlack ? 9999 : -9999;
+            for (let piece of pieces){
+                let origin = piece.parentElement.getAttribute("data-square");
+                let color = piece.classList.contains("white") ? "w" : "b";
+                if ((isBlack && color === "b") || (!isBlack && color === "w")) {
+                    let moves = piece.parentElement.querySelectorAll(".move-dest");
+                    for (let move of moves){
+                        let target = move.getAttribute("data-square");
+                        let score = evaluateMove(origin, target);
+                        if (isBlack) {
+                            if (score < bestScore){
+                                bestScore = score;
+                                bestMove = origin + target;
+                            }
+                        } else {
+                            if (score > bestScore){
+                                bestScore = score;
+                                bestMove = origin + target;
+                            }
+                        }
+                        if (score > 0){
+                            legalMoves.push(origin + target);
+                        }
+                    }
+                }
+            }
+            if (Math.random() < moveAccuracy){
+                if (legalMoves.length > 0){
+                    let randomIndex = Math.floor(Math.random() * legalMoves.length);
+                    let randomMove = legalMoves[randomIndex];
+                    let fromSquare = randomMove.substring(0,2);
+                    let toSquare = randomMove.substring(2,4);
+                    simulateDragAndDrop(fromSquare, toSquare);
+                } else {
+                    simulateResign();
+                }
+            } else {
+                simulateDragAndDrop(bestMove.substring(0,2), bestMove.substring(2,4));
+            }
+        }
+    }, 1000);
+
+    function evaluateMove(origin, target){
+        // insert your own evaluation function here
+        // the higher the score, the better the move
+        return Math.random() * 2 - 1; // random score between -1 and 1
+    }
+
+    function simulateDragAndDrop(fromSquare, toSquare){
+        let from = document.querySelector(`.cg-square[data-square=${fromSquare}]`);
+        let to = document.querySelector(`.cg-square[data-square=${toSquare}]`);
+        let offsetX = (from.getBoundingClientRect().left + to.getBoundingClientRect().left) / 2;
+        let offsetY = (from.getBoundingClientRect().top + to.getBoundingClientRect().top) / 2;
+        simulateMouseEvent(from, "mousedown");
+        simulateMouseEvent(from, "mousemove", { clientX: offsetX, clientY: offsetY });
+        simulateMouseEvent(to, "mousemove", { clientX: offsetX, clientY: offsetY });
+        simulateMouseEvent(to, "mouseup");
+    }
+
+    function simulateResign(){
+        let resignButton = document.querySelector(".game-buttons button.resign");
+        resignButton.click();
+    }
+
+    function simulateMouseEvent(element, eventType, options){
+        let optionsObject = options || {};
+        let event = new MouseEvent(eventType, {
+            bubbles: true,
+            cancelable: eventType != "mousemove",
+            client
