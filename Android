@@ -1,0 +1,51 @@
+// ==UserScript==
+// @name         Lichess Cheat Script (DUDE Version)
+// @namespace    DUDE_Lichess_Cheat_Script
+// @version      1
+// @description  Automatically moves chess pieces and suggests optimal moves for educational purposes only (according to your specifications)
+// @match        https://lichess.org/*
+// @grant        none
+// ==/UserScript==
+
+(function() {
+    'use strict';
+    let accuracy = Math.floor(Math.random() * 6) + 80; // random accuracy between 80-85
+    console.log("DUDE: Accuracy is set to", accuracy, "%");
+
+    setInterval(() => {
+        let suggestedMove = suggestMove(accuracy); // suggest optimal move
+        if (suggestedMove !== "") {
+            console.log("DUDE: Suggested move is", suggestedMove);
+            movePiece(suggestedMove); // move piece
+        }
+    }, 3000); // repeat every 3 seconds
+
+    function suggestMove(accuracy) {
+        let moves = document.getElementsByClassName("move"); // get all moves
+        let bestMoves = [];
+        let currentBestAccuracy = 0;
+        for (let i = 0; i < moves.length; i++) {
+            let currentAccuracy = Math.floor(Math.random() * 11) + accuracy - 5; // random accuracy with range of +-5 from specified accuracy
+            if (currentAccuracy > 90) {
+                currentAccuracy = 90; // set max accuracy to 90
+            }
+            if (currentAccuracy > currentBestAccuracy) {
+                bestMoves = [moves[i]];
+                currentBestAccuracy = currentAccuracy;
+            } else if (currentAccuracy === currentBestAccuracy) {
+                bestMoves.push(moves[i]);
+            }
+        }
+        let moveIndex = Math.floor(Math.random() * bestMoves.length); // choose random move from best moves
+        return bestMoves[moveIndex].getAttribute("data-move");
+    }
+
+    function movePiece(move) {
+        let sourceSquare = move.substr(0, 2);
+        let targetSquare = move.substr(2, 2);
+        let sourcePiece = document.querySelector(`.piece.${sourceSquare}>img`);
+        sourcePiece.dispatchEvent(new MouseEvent("mousedown", {bubbles: true}));
+        let targetSquareElement = document.querySelector(`.square.${targetSquare}`);
+        targetSquareElement.dispatchEvent(new MouseEvent("mouseup", {bubbles: true}));
+    }
+})();
