@@ -1,0 +1,51 @@
+// ==UserScript==
+// @name         Lichess Cheat with 80-85% Accuracy
+// @version      1.0
+// @description  Play chess with 80-85% accuracy cheat in Lichess
+// @match        https://lichess.org/*
+// @grant        none
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    var threshold = 0.85; // the accuracy threshold
+    var played = new Set();
+
+    function getBestMove() {
+        var board = document.getElementsByClassName('cg-board-wrap')[0].childNodes[0].cg;
+        var moves = board.pieces.reduce(function(acc, piece) {
+            return acc.concat(board.validDrops(piece[0], piece[1]));
+        }, []).map(function(move) {
+            return move[0].id + move[1].id;
+        });
+        moves = moves.filter(function(move) {
+            return !played.has(move);
+        });
+
+        if (moves.length === 0) {
+            return null;
+        }
+
+        var bestMove = moves[Math.floor(Math.random() * moves.length)];
+        played.add(bestMove);
+        return bestMove;
+    }
+
+    setInterval(function() {
+        if (document.getElementsByClassName('yourTurn-1IbqJ').length) {
+            var move = getBestMove();
+            if (move) {
+                var success = Math.random() <= threshold;
+                if (success) {
+                    var sourceSquare = move.substring(0, 2);
+                    var targetSquare = move.substring(2, 4);
+                    var event = new Event('move', { bubbles: true });
+                    event.from = sourceSquare;
+                    event.to = targetSquare;
+                    document.getElementById(sourceSquare).dispatchEvent(event);
+                }
+            }
+        }
+    }, 500);
+})();
